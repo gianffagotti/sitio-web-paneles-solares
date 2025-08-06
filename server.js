@@ -140,47 +140,51 @@ app.post('/contacto', async (req, res) => {
   }
 });
 
-// Ruta para actualizar la configuración de contacto (solo POST)
+// Ruta para recargar la configuración de contacto desde el archivo (sin recibir body)
 app.put('/api/config', (req, res) => {
   try {
-    const newConfig = req.body;
-    
-    // Validar que se proporcione una configuración válida
-    if (!newConfig || typeof newConfig !== 'object') {
-      return res.status(400).json({
-        success: false,
-        message: 'Configuración inválida'
-      });
-    }
-
-    // Validar estructura mínima requerida
-    if (!newConfig.empresa || !newConfig.contacto || !newConfig.redesSociales) {
-      return res.status(400).json({
-        success: false,
-        message: 'La configuración debe incluir empresa, contacto y redesSociales'
-      });
-    }
-
     const configPath = path.join(__dirname, 'config', 'contact-config.json');
     
-    // Crear directorio config si no existe
-    const configDir = path.dirname(configPath);
-    if (!fs.existsSync(configDir)) {
-      fs.mkdirSync(configDir, { recursive: true });
+    // Verificar que el archivo de configuración existe
+    if (!fs.existsSync(configPath)) {
+      return res.status(404).json({
+        success: false,
+        message: 'Archivo de configuración no encontrado'
+      });
     }
     
-    // Guardar la nueva configuración
-    fs.writeFileSync(configPath, JSON.stringify(newConfig, null, 2));
+    // Leer y parsear la configuración actual del archivo
+    const configData = fs.readFileSync(configPath, 'utf8');
+    const currentConfig = JSON.parse(configData);
     
+    // Validar estructura mínima requerida
+    if (!currentConfig.empresa || !currentConfig.contacto || !currentConfig.redesSociales) {
+      return res.status(400).json({
+        success: false,
+        message: 'El archivo de configuración no tiene la estructura requerida (empresa, contacto, redesSociales)'
+      });
+    }
+    
+    // Devolver la configuración actualizada
     res.json({
       success: true,
-      message: 'Configuración actualizada correctamente'
+      message: 'Configuración recargada correctamente desde el archivo',
+      data: currentConfig
     });
+    
   } catch (error) {
-    console.error('Error al actualizar configuración:', error);
+    console.error('Error al recargar configuración:', error);
+    
+    if (error instanceof SyntaxError) {
+      return res.status(400).json({
+        success: false,
+        message: 'Error de sintaxis en el archivo JSON de configuración'
+      });
+    }
+    
     res.status(500).json({
       success: false,
-      message: 'Error al actualizar la configuración'
+      message: 'Error al recargar la configuración'
     });
   }
 });
