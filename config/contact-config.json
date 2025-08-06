@@ -1,0 +1,65 @@
+{
+  "empresa": {
+    "nombre": "SolarTech",
+    "descripcion": "Líder en soluciones de energía solar. Comprometidos con un futuro sostenible y eficiente.",
+    "slogan": "Energía limpia para tu hogar"
+  },
+  "contacto": {
+    "direccion": {
+      "calle": "Calle Falsa 1234",
+      "ciudad": "Caballito",
+      "codigoPostal": "1043",
+      "pais": "Argentina",
+      "completa": "Calle Falsa 123, Caballito, CP 1043, Argentina"
+    },
+    "telefonos": [
+      "+54 (11) 1234-5678"
+    ],
+    "emails": [
+      {
+        "tipo": "general",
+        "direccion": "contacto@solartech.ar"
+      },
+      {
+        "tipo": "ventas",
+        "direccion": "ventas@solartech.ar"
+      }
+    ],
+    "horario": {
+      "lunesViernes": "8:00 - 18:00",
+      "sabado": "9:00 - 14:00",
+      "domingo": "Cerrado"
+    }
+  },
+  "redesSociales": {
+    "facebook": {
+      "url": "https://facebook.com/solartech",
+      "activo": true
+    },
+    "instagram": {
+      "url": "https://instagram.com/solartech",
+      "activo": true
+    },
+    "twitter": {
+      "url": "https://twitter.com/solartech",
+      "activo": true
+    },
+    "linkedin": {
+      "url": "https://linkedin.com/company/solartech",
+      "activo": true
+    },
+    "youtube": {
+      "url": "https://youtube.com/@solartech",
+      "activo": false
+    },
+    "whatsapp": {
+      "numero": "+5215512345678",
+      "activo": true
+    }
+  },
+  "configuracion": {
+    "mostrarWhatsapp": true,
+    "mostrarHorarios": true,
+    "emailPrincipal": "contacto@solartech.mx"
+  }
+}

@@ -4,12 +4,184 @@ const CONFIG = {
     animationDuration: 300
 };
 
-// Inicialización cuando el DOM está listo
+// Inicializar la aplicación cuando se carga la página
 document.addEventListener('DOMContentLoaded', function() {
+    loadContactConfig();
+    
     initNavigation();
     initContactForm();
     initScrollAnimations();
-});
+}); 
+
+// Variable global para almacenar la configuración
+let contactConfig = null;
+
+// Función para cargar la configuración de contacto
+async function loadContactConfig() {
+    try {
+        const response = await fetch(`${CONFIG.apiUrl}/api/config`);
+        const result = await response.json();
+        
+        if (result.success) {
+            contactConfig = result.data;
+            updateContactInformation();
+            return contactConfig;
+        } else {
+            console.error('Error al cargar configuración:', result.message);
+            return null;
+        }
+    } catch (error) {
+        console.error('Error al cargar configuración de contacto:', error);
+        return null;
+    }
+}
+
+// Función para actualizar la información de contacto en el HTML
+function updateContactInformation() {
+    if (!contactConfig) return;
+
+    // Actualizar información de la empresa
+    updateCompanyInfo();
+    
+    // Actualizar información de contacto
+    updateContactInfo();
+    
+    // Actualizar redes sociales
+    updateSocialLinks();
+    
+    // Actualizar footer
+    updateFooter();
+}
+
+// Actualizar información de la empresa
+function updateCompanyInfo() {
+    const { empresa } = contactConfig;
+    
+    // Actualizar nombre de la empresa en el logo
+    const logoTexts = document.querySelectorAll('.logo span');
+    logoTexts.forEach(span => {
+        span.textContent = empresa.nombre;
+    });
+    
+    // Actualizar descripción de la empresa
+    const companyDescriptions = document.querySelectorAll('.footer-section p');
+    if (companyDescriptions[0]) {
+        companyDescriptions[0].textContent = empresa.descripcion;
+    }
+}
+
+// Actualizar información de contacto
+function updateContactInfo() {
+    const { contacto } = contactConfig;
+    
+    // Obtener todos los elementos de contacto
+    const contactItems = document.querySelectorAll('.contact-item');
+    
+    contactItems.forEach(item => {
+        const icon = item.querySelector('i');
+        const paragraph = item.querySelector('p');
+        
+        if (!icon || !paragraph) return;
+        
+        // Actualizar dirección - buscar por el ícono de ubicación
+        if (icon.classList.contains('fa-map-marker-alt')) {
+            paragraph.innerHTML = `${contacto.direccion.completa}`;
+        }
+        
+        // Actualizar teléfonos - buscar por el ícono de teléfono
+        else if (icon.classList.contains('fa-phone')) {
+            paragraph.innerHTML = contacto.telefonos.join('<br>');
+        }
+        
+        // Actualizar emails - buscar por el ícono de email
+        else if (icon.classList.contains('fa-envelope')) {
+            const emailsHtml = contacto.emails.map(email => 
+                `<a href="mailto:${email.direccion}">${email.direccion}</a>`
+            ).join('<br>');
+            paragraph.innerHTML = emailsHtml;
+        }
+        
+        // Actualizar horarios - buscar por el ícono de reloj
+        else if (icon.classList.contains('fa-clock')) {
+            paragraph.innerHTML = `Lunes a Viernes: ${contacto.horario.lunesViernes}<br>Sábados: ${contacto.horario.sabado}`;
+        }
+    });
+}
+
+// Actualizar enlaces de redes sociales
+function updateSocialLinks() {
+    const { redesSociales } = contactConfig;
+    const socialLinksContainer = document.querySelector('.social-links');
+    
+    if (!socialLinksContainer) return;
+    
+    // Limpiar enlaces existentes
+    socialLinksContainer.innerHTML = '';
+    
+    // Agregar enlaces activos
+    Object.entries(redesSociales).forEach(([red, config]) => {
+        if (config.activo && red !== 'whatsapp') {
+            const link = document.createElement('a');
+            link.href = config.url;
+            link.target = '_blank';
+            link.rel = 'noopener noreferrer';
+            link.setAttribute('aria-label', red.charAt(0).toUpperCase() + red.slice(1));
+            
+            const icon = document.createElement('i');
+            icon.className = `fab fa-${red}`;
+            
+            link.appendChild(icon);
+            socialLinksContainer.appendChild(link);
+        }
+    });
+    
+    // Agregar WhatsApp si está activo
+    if (redesSociales.whatsapp.activo) {
+        const whatsappLink = document.createElement('a');
+        whatsappLink.href = `https://wa.me/${redesSociales.whatsapp.numero.replace(/[^0-9]/g, '')}`;
+        whatsappLink.target = '_blank';
+        whatsappLink.rel = 'noopener noreferrer';
+        whatsappLink.setAttribute('aria-label', 'WhatsApp');
+        
+        const whatsappIcon = document.createElement('i');
+        whatsappIcon.className = 'fab fa-whatsapp';
+        
+        whatsappLink.appendChild(whatsappIcon);
+        socialLinksContainer.appendChild(whatsappLink);
+    }
+}
+
+// Actualizar footer
+function updateFooter() {
+    const { contacto } = contactConfig;
+    
+    // Encontrar la sección de contacto en el footer por su título
+    const footerSections = document.querySelectorAll('.footer-section');
+    let contactSection = null;
+    
+    footerSections.forEach(section => {
+        const h4 = section.querySelector('h4');
+        if (h4 && h4.textContent.trim() === 'Contacto') {
+            contactSection = section;
+        }
+    });
+    
+    if (contactSection) {
+        const contactItems = contactSection.querySelectorAll('p');
+        
+        if (contactItems[0]) {
+            contactItems[0].innerHTML = `<i class="fas fa-map-marker-alt"></i> ${contacto.direccion.calle}`;
+        }
+        
+        if (contactItems[1]) {
+            contactItems[1].innerHTML = `<i class="fas fa-phone"></i> ${contacto.telefonos[0]}`;
+        }
+        
+        if (contactItems[2]) {
+            contactItems[2].innerHTML = `<i class="fas fa-envelope"></i> ${contacto.emails[0].direccion}`;
+        }
+    }
+}
 
 // === NAVEGACIÓN ===
 
