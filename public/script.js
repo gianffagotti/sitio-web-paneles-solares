@@ -19,20 +19,37 @@ let contactConfig = null;
 // Función para cargar la configuración de contacto
 async function loadContactConfig() {
     try {
-        const response = await fetch(`${CONFIG.apiUrl}/api/config`);
-        const result = await response.json();
+        // Cargar directamente el archivo JSON desde Firebase hosting
+        const response = await fetch('/contact-config.json');
         
-        if (result.success) {
-            contactConfig = result.data;
-            updateContactInformation();
-            return contactConfig;
-        } else {
-            console.error('Error al cargar configuración:', result.message);
-            return null;
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
+        
+        contactConfig = await response.json();
+        updateContactInformation();
+        return contactConfig;
+        
     } catch (error) {
         console.error('Error al cargar configuración de contacto:', error);
-        return null;
+        
+        // Fallback: intentar cargar desde el endpoint original
+        try {
+            const response = await fetch(`${CONFIG.apiUrl}/api/config`);
+            const result = await response.json();
+            
+            if (result.success) {
+                contactConfig = result.data;
+                updateContactInformation();
+                return contactConfig;
+            } else {
+                console.error('Error al cargar configuración:', result.message);
+                return null;
+            }
+        } catch (fallbackError) {
+            console.error('Error en fallback de configuración:', fallbackError);
+            return null;
+        }
     }
 }
 

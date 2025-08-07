@@ -32,3 +32,10 @@ Thumbs.db
 .idea/
 *.swp
 *.swo
+
+# Firebase cache
+.firebase/
+
+# Firebase service account keys (si usas alguno)
+*-firebase-adminsdk-*.json
+service-account-key.json
