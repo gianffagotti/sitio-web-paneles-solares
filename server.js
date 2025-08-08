@@ -3,28 +3,61 @@ const cors = require('cors');
 const nodemailer = require('nodemailer');
 const path = require('path');
 const fs = require('fs');
+const helmet = require('helmet');
+const compression = require('compression');
+const rateLimit = require('express-rate-limit');
 require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Utilidad para escapar HTML en contenidos de usuario
+function escapeHtml(unsafe) {
+  if (typeof unsafe !== 'string') return '';
+  return unsafe
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 // Función para cargar la configuración de contacto
 function loadContactConfig() {
-    try {
-        const configPath = path.join(__dirname, 'config', 'contact-config.json');
-        const configData = fs.readFileSync(configPath, 'utf8');
-        return JSON.parse(configData);
-    } catch (error) {
-        console.error('Error al cargar configuración de contacto:', error);
-        return null;
-    }
+  try {
+    const configPath = path.join(__dirname, 'public', 'contact-config.json');
+    const configData = fs.readFileSync(configPath, 'utf8');
+    return JSON.parse(configData);
+  } catch (error) {
+    console.error('Error al cargar configuración de contacto:', error);
+    return null;
+  }
 }
 
 // Middlewares
-app.use(cors());
-app.use(express.json());
+const allowedOrigins = (process.env.ALLOWED_ORIGINS || '').split(',').map(o => o.trim()).filter(Boolean);
+app.use(helmet({ contentSecurityPolicy: false }));
+app.use(compression());
+app.use(cors({
+  origin: function(origin, callback) {
+    if (!origin || allowedOrigins.length === 0 || allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error('No permitido por CORS'));
+  }
+}));
+app.use(express.json({ limit: '100kb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
+
+// Límite de rate para el endpoint de contacto
+const contactLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000, // 10 minutos
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: 'Demasiadas solicitudes, inténtalo más tarde.' }
+});
 
 // Configuración de nodemailer
 const transporter = nodemailer.createTransport({
@@ -49,7 +82,7 @@ app.get('/', (req, res) => {
 // Ruta para servir la configuración de contacto
 app.get('/api/config', (req, res) => {
   try {
-    const configPath = path.join(__dirname, 'config', 'contact-config.json');
+    const configPath = path.join(__dirname, 'public', 'contact-config.json');
     const configData = fs.readFileSync(configPath, 'utf8');
     const config = JSON.parse(configData);
     
@@ -67,9 +100,14 @@ app.get('/api/config', (req, res) => {
 });
 
 // Ruta para manejar el formulario de contacto
-app.post('/contacto', async (req, res) => {
+app.post('/contacto', contactLimiter, async (req, res) => {
   try {
-    const { nombre, email, telefono, mensaje } = req.body;
+    const { nombre, email, telefono = '', mensaje, website } = req.body; // "website" = honeypot
+
+    // Antispam básico por honeypot
+    if (website && website.trim() !== '') {
+      return res.status(400).json({ success: false, message: 'Solicitud inválida' });
+    }
 
     // Validaciones básicas
     if (!nombre || !email || !mensaje) {
@@ -77,6 +115,14 @@ app.post('/contacto', async (req, res) => {
         success: false,
         message: 'Los campos Nombre, Email y Mensaje son obligatorios'
       });
+    }
+
+    // Validar longitudes mínimas
+    if (String(nombre).trim().length < 2) {
+      return res.status(400).json({ success: false, message: 'El nombre es demasiado corto' });
+    }
+    if (String(mensaje).trim().length < 10) {
+      return res.status(400).json({ success: false, message: 'El mensaje es demasiado corto' });
     }
 
     // Validar formato de email
@@ -93,6 +139,11 @@ app.post('/contacto', async (req, res) => {
     const empresa = config?.empresa?.nombre || 'SolarTech';
     const emailDestino = config?.configuracion?.emailPrincipal || process.env.CONTACT_EMAIL || process.env.SMTP_USER;
 
+    const safeNombre = escapeHtml(String(nombre).trim());
+    const safeEmail = escapeHtml(String(email).trim());
+    const safeTelefono = escapeHtml(String(telefono).trim());
+    const safeMensaje = escapeHtml(String(mensaje).trim()).replace(/\n/g, '<br>');
+
     // Configurar el email
     const mailOptions = {
       from: process.env.SMTP_USER,
@@ -104,14 +155,14 @@ app.post('/contacto', async (req, res) => {
           
           <div style="background-color: #f9f9f9; padding: 20px; border-radius: 5px; margin: 20px 0;">
             <h3 style="color: #333; margin-top: 0;">Datos del Cliente:</h3>
-            <p><strong>Nombre:</strong> ${nombre}</p>
-            <p><strong>Email:</strong> <a href="mailto:${email}">${email}</a></p>
-            ${telefono ? `<p><strong>Teléfono:</strong> ${telefono}</p>` : ''}
+            <p><strong>Nombre:</strong> ${safeNombre}</p>
+            <p><strong>Email:</strong> <a href="mailto:${safeEmail}">${safeEmail}</a></p>
+            ${safeTelefono ? `<p><strong>Teléfono:</strong> ${safeTelefono}</p>` : ''}
           </div>
           
           <div style="background-color: #fff; padding: 20px; border-left: 4px solid #4CAF50; margin: 20px 0;">
             <h3 style="color: #333; margin-top: 0;">Mensaje:</h3>
-            <p style="line-height: 1.6;">${mensaje.replace(/\n/g, '<br>')}</p>
+            <p style="line-height: 1.6;">${safeMensaje}</p>
           </div>
           
           <div style="margin-top: 30px; padding: 15px; background-color: #e8f5e8; border-radius: 5px; text-align: center;">
@@ -143,7 +194,7 @@ app.post('/contacto', async (req, res) => {
 // Ruta para recargar la configuración de contacto desde el archivo (sin recibir body)
 app.put('/api/config', (req, res) => {
   try {
-    const configPath = path.join(__dirname, 'config', 'contact-config.json');
+    const configPath = path.join(__dirname, 'public', 'contact-config.json');
     
     // Verificar que el archivo de configuración existe
     if (!fs.existsSync(configPath)) {

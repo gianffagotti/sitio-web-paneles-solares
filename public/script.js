@@ -209,6 +209,9 @@ function initNavigation() {
     
     // Toggle del menú hamburguesa
     hamburger?.addEventListener('click', () => {
+        const isExpanded = hamburger.getAttribute('aria-expanded') === 'true';
+        const nextExpanded = !isExpanded;
+        hamburger.setAttribute('aria-expanded', String(nextExpanded));
         hamburger.classList.toggle('active');
         navMenu.classList.toggle('active');
     });
@@ -217,6 +220,7 @@ function initNavigation() {
     navLinks.forEach(link => {
         link.addEventListener('click', () => {
             hamburger?.classList.remove('active');
+            hamburger?.setAttribute('aria-expanded', 'false');
             navMenu?.classList.remove('active');
         });
     });
@@ -225,6 +229,7 @@ function initNavigation() {
     document.addEventListener('click', (e) => {
         if (!hamburger?.contains(e.target) && !navMenu?.contains(e.target)) {
             hamburger?.classList.remove('active');
+            hamburger?.setAttribute('aria-expanded', 'false');
             navMenu?.classList.remove('active');
         }
     });
@@ -266,8 +271,10 @@ function updateActiveNavLink() {
         if (scrollPos >= sectionTop && scrollPos < sectionTop + sectionHeight) {
             navLinks.forEach(link => {
                 link.classList.remove('active');
+                link.removeAttribute('aria-current');
                 if (link.getAttribute('href') === `#${sectionId}`) {
                     link.classList.add('active');
+                    link.setAttribute('aria-current', 'page');
                 }
             });
         }
@@ -404,8 +411,9 @@ async function handleFormSubmit(e) {
         const data = {
             nombre: formData.get('nombre').trim(),
             email: formData.get('email').trim(),
-            telefono: formData.get('telefono').trim() || '',
-            mensaje: formData.get('mensaje').trim()
+            telefono: (formData.get('telefono') || '').toString().trim(),
+            mensaje: formData.get('mensaje').trim(),
+            website: (formData.get('website') || '').toString().trim() // honeypot
         };
         
         // Enviar datos al servidor
@@ -458,6 +466,8 @@ function showNotification(message, type = 'success') {
     // Crear nueva notificación
     const notification = document.createElement('div');
     notification.className = `notification ${type}`;
+    notification.setAttribute('role', 'status');
+    notification.setAttribute('aria-live', type === 'error' ? 'assertive' : 'polite');
     notification.textContent = message;
     
     // Agregar al DOM

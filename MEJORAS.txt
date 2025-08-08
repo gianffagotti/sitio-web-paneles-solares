@@ -1,0 +1,54 @@
+MEJORAS APLICADAS Y JUSTIFICACIÓN
+
+1) Seguridad backend
+- Helmet + Compression + Rate limit: añade cabeceras seguras, comprime respuestas y limita /contacto a 5 req/10min para mitigar abuso (DoS y spam).
+- CORS configurable (ALLOWED_ORIGINS): restringe orígenes permitidos en lugar de permitir todos.
+- Honeypot (campo oculto "website"): bloquea bots simples sin afectar UX; validado en el servidor.
+- Validación estricta: mínimos de longitud en nombre/mensaje y formato de email.
+- Sanitización: escape HTML en nombre/email/teléfono/mensaje antes de construir el correo para evitar inyección de HTML.
+- Alineación de configuración: el servidor ahora lee `public/contact-config.json` para usar el mismo origen que el frontend (evita divergencias y errores de ruta).
+
+2) Rendimiento
+- Compresión gzip a nivel de servidor.
+- Cache-Control en hosting (Firebase): `*.css` y `*.js` con caché largo (1 año, immutable); `index.html` sin caché; `contact-config.json` con caché corta (5 min).
+
+3) SEO
+- Meta description y canonical.
+- Open Graph y Twitter Card básicas.
+- Datos estructurados JSON-LD (LocalBusiness) para enriquecimiento en buscadores.
+
+4) Accesibilidad (a11y)
+- Skip link para saltar al contenido principal.
+- Menú hamburguesa como botón con `aria-controls` y `aria-expanded` dinámico.
+- `aria-current="page"` para enlace activo.
+- Mejoras de foco con `:focus-visible`.
+- Notificaciones con `role=status` y `aria-live`.
+
+5) UX del formulario
+- Atributos `autocomplete`, `inputmode`, `minlength`.
+- Mismo honeypot del backend en el formulario.
+- Mensajes de error y estados ya existentes conservados.
+
+6) Limpieza/consistencia
+- Iconos marcados como decorativos con `aria-hidden` donde corresponde.
+- `main` wrapping y landmarks semánticos.
+
+Archivos modificados
+- package.json: agrega `helmet`, `compression`, `express-rate-limit`.
+- server.js: seguridad, CORS, rate limiting, honeypot, sanitización, lectura de config desde `public/`.
+- public/index.html: meta SEO/OG, JSON-LD, skip link, navbar accesible, `main`, honeypot, mejoras a11y.
+- public/styles.css: estilos skip link, focus-visible, header scrolled y ajustes mínimos.
+- public/script.js: control aria del menú, `aria-current`, envío de honeypot, a11y notificaciones.
+- firebase.json: cabeceras de caché para CSS/JS e index.html.
+- env.example: variable `ALLOWED_ORIGINS` y comentarios.
+
+Impacto esperado
+- Menor superficie de ataque y menos spam.
+- Mejor puntuación en Lighthouse (Performance + SEO + Best Practices + Accessibility).
+- Menor TTFB percibido y mejores tiempos de carga repetida por caché.
+- Mejor experiencia de navegación con teclado y lectores de pantalla.
+
+Notas de despliegue
+- Ejecutar `npm install` para instalar nuevas dependencias.
+- Configurar `.env` con SMTP y `ALLOWED_ORIGINS`.
+- Si usas Firebase Hosting, desplegar para que apliquen las nuevas cabeceras. 
