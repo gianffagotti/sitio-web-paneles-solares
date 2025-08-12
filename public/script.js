@@ -1,6 +1,5 @@
 // Configuración global
 const CONFIG = {
-    apiUrl: window.location.origin,
     animationDuration: 300
 };
 
@@ -32,24 +31,7 @@ async function loadContactConfig() {
         
     } catch (error) {
         console.error('Error al cargar configuración de contacto:', error);
-        
-        // Fallback: intentar cargar desde el endpoint original
-        try {
-            const response = await fetch(`${CONFIG.apiUrl}/api/config`);
-            const result = await response.json();
-            
-            if (result.success) {
-                contactConfig = result.data;
-                updateContactInformation();
-                return contactConfig;
-            } else {
-                console.error('Error al cargar configuración:', result.message);
-                return null;
-            }
-        } catch (fallbackError) {
-            console.error('Error en fallback de configuración:', fallbackError);
-            return null;
-        }
+        return null;
     }
 }
 
@@ -388,6 +370,16 @@ function validateForm(form) {
     return isFormValid;
 }
 
+function sanitizeInput(value) {
+    return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;')
+        .trim();
+}
+
 async function handleFormSubmit(e) {
     e.preventDefault();
     
@@ -400,35 +392,43 @@ async function handleFormSubmit(e) {
         return;
     }
     
+    // Honeypot simple
+    const honeypot = form.querySelector('#website');
+    if (honeypot && honeypot.value.trim() !== '') {
+        showNotification('Solicitud inválida', 'error');
+        return;
+    }
+    
     // Deshabilitar botón y mostrar loading
     const originalBtnText = submitBtn.innerHTML;
     submitBtn.disabled = true;
     submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...';
     
     try {
-        // Recopilar datos del formulario
+        // Recopilar y sanitizar datos del formulario
         const formData = new FormData(form);
         const data = {
-            nombre: formData.get('nombre').trim(),
-            email: formData.get('email').trim(),
-            telefono: (formData.get('telefono') || '').toString().trim(),
-            mensaje: formData.get('mensaje').trim(),
-            website: (formData.get('website') || '').toString().trim() // honeypot
+            nombre: sanitizeInput(formData.get('nombre') || ''),
+            email: sanitizeInput(formData.get('email') || ''),
+            telefono: sanitizeInput(formData.get('telefono') || ''),
+            mensaje: sanitizeInput(formData.get('mensaje') || ''),
+            website: sanitizeInput(formData.get('website') || '')
         };
         
-        // Enviar datos al servidor
-        const response = await fetch(`${CONFIG.apiUrl}/contacto`, {
+        const endpoint = form.getAttribute('action') || 'https://formspree.io/f/xanbvjzq';
+        
+        // Enviar datos a Formspree
+        const response = await fetch(endpoint, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
             },
             body: JSON.stringify(data)
         });
         
-        const result = await response.json();
-        
-        if (response.ok && result.success) {
-            showNotification(result.message || 'Mensaje enviado correctamente', 'success');
+        if (response.ok) {
+            showNotification('Gracias, tu mensaje fue enviado. Nos pondremos en contacto contigo pronto.', 'success');
             form.reset();
             // Limpiar errores visuales
             form.querySelectorAll('.form-group').forEach(group => {
@@ -438,7 +438,9 @@ async function handleFormSubmit(e) {
                 error.textContent = '';
             });
         } else {
-            throw new Error(result.message || 'Error al enviar el mensaje');
+            const result = await response.json().catch(() => ({}));
+            const errorMsg = result?.errors?.[0]?.message || 'Error al enviar el mensaje. Por favor, inténtalo de nuevo.';
+            throw new Error(errorMsg);
         }
         
     } catch (error) {
@@ -458,27 +460,31 @@ async function handleFormSubmit(e) {
 
 function showNotification(message, type = 'success') {
     // Remover notificación anterior si existe
-    const existingNotification = document.querySelector('.notification');
+    const existingNotification = document.getElementById('notification');
     if (existingNotification) {
-        existingNotification.remove();
+        existingNotification.className = `notification ${type}`;
+        existingNotification.textContent = message;
+        existingNotification.classList.add('show');
+        setTimeout(() => {
+            existingNotification.classList.remove('show');
+        }, 5000);
+        return;
     }
     
-    // Crear nueva notificación
+    // Crear nueva notificación si no existe en el DOM
     const notification = document.createElement('div');
+    notification.id = 'notification';
     notification.className = `notification ${type}`;
     notification.setAttribute('role', 'status');
     notification.setAttribute('aria-live', type === 'error' ? 'assertive' : 'polite');
     notification.textContent = message;
     
-    // Agregar al DOM
     document.body.appendChild(notification);
     
-    // Mostrar con animación
     setTimeout(() => {
         notification.classList.add('show');
     }, 100);
     
-    // Ocultar después de 5 segundos
     setTimeout(() => {
         notification.classList.remove('show');
         setTimeout(() => {

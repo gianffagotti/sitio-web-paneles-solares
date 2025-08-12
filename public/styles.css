@@ -588,6 +588,19 @@ html {
     color: #ccc;
 }
 
+.site-version {
+    display: inline-block;
+    margin-top: 0.75rem;
+    background: var(--accent-color);
+    color: var(--dark-color);
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-weight: 700;
+    font-size: 0.95rem;
+    letter-spacing: 0.02em;
+    box-shadow: var(--shadow);
+}
+
 /* Notificaciones */
 .notification {
     position: fixed;
