@@ -1,6 +1,6 @@
 {
   "empresa": {
-    "nombre": "SolarTech",
+    "nombre": "RevolEnergy",
     "descripcion": "Líder en soluciones de energía solar. Comprometidos con un futuro sostenible y eficiente.",
     "slogan": "Energía limpia para tu hogar"
   },
@@ -13,16 +13,12 @@
       "completa": "Calle Falsa 12345, Caballito, CP 1043, Argentina"
     },
     "telefonos": [
-      "+54 (11) 1234-5678"
+      "+54 (11) 5035-2388"
     ],
     "emails": [
       {
         "tipo": "general",
-        "direccion": "contacto@solartech.ar"
-      },
-      {
-        "tipo": "ventas",
-        "direccion": "ventas@solartech.ar"
+        "direccion": "info@panelesolares.com"
       }
     ],
     "horario": {
@@ -34,32 +30,32 @@
   "redesSociales": {
     "facebook": {
       "url": "https://facebook.com/solartech",
-      "activo": true
+      "activo": false
     },
     "instagram": {
-      "url": "https://instagram.com/solartech",
+      "url": "https://www.instagram.com/revolenergy",
       "activo": true
     },
     "twitter": {
       "url": "https://twitter.com/solartech",
-      "activo": true
+      "activo": false
     },
     "linkedin": {
       "url": "https://linkedin.com/company/solartech",
-      "activo": true
+      "activo": false
     },
     "youtube": {
       "url": "https://youtube.com/@solartech",
       "activo": false
     },
     "whatsapp": {
-      "numero": "+5215512345678",
+      "numero": "+5491150352388",
       "activo": true
     }
   },
   "configuracion": {
     "mostrarWhatsapp": true,
-    "mostrarHorarios": true,
+    "mostrarHorarios": false,
     "emailPrincipal": "gian.fagotti@amedia.com.ar"
   }
 } 
