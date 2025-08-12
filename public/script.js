@@ -50,6 +50,9 @@ function updateContactInformation() {
     
     // Actualizar footer
     updateFooter();
+
+    // Inicializar WhatsApp flotante
+    initWhatsappFloatingButton();
 }
 
 // Actualizar información de la empresa
@@ -179,6 +182,30 @@ function updateFooter() {
         if (contactItems[2]) {
             contactItems[2].innerHTML = `<i class="fas fa-envelope"></i> ${contacto.emails[0].direccion}`;
         }
+    }
+}
+
+// WhatsApp flotante
+function initWhatsappFloatingButton() {
+    try {
+        const button = document.querySelector('.whatsapp-float');
+        if (!button) return;
+
+        const { redesSociales, configuracion } = contactConfig || {};
+        const isActive = configuracion?.mostrarWhatsapp && redesSociales?.whatsapp?.activo && redesSociales?.whatsapp?.numero;
+
+        if (!isActive) {
+            button.style.display = 'none';
+            return;
+        }
+
+        const phone = String(redesSociales.whatsapp.numero).replace(/[^0-9]/g, '');
+        const defaultMessage = 'Hola, me gustaría recibir información sobre paneles solares.';
+        const message = encodeURIComponent(defaultMessage);
+        button.href = `https://wa.me/${phone}?text=${message}`;
+        button.style.display = 'flex';
+    } catch (error) {
+        console.error('Error inicializando WhatsApp flotante:', error);
     }
 }
 
