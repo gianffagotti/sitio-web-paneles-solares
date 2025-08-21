@@ -51,7 +51,8 @@ function updateContactInformation() {
     // Actualizar footer
     updateFooter();
 
-    // Inicializar WhatsApp flotante
+    // Inicializar botones flotantes
+    initInstagramFloatingButton();
     initWhatsappFloatingButton();
 }
 
@@ -206,6 +207,29 @@ function initWhatsappFloatingButton() {
         button.style.display = 'flex';
     } catch (error) {
         console.error('Error inicializando WhatsApp flotante:', error);
+    }
+}
+
+// Instagram flotante
+function initInstagramFloatingButton() {
+    try {
+        const button = document.querySelector('.instagram-float');
+        if (!button) return;
+
+        const { redesSociales, configuracion } = contactConfig || {};
+        const instagram = redesSociales?.instagram;
+        const mostrarInstagram = configuracion?.mostrarInstagram;
+        const isActive = (mostrarInstagram !== false) && instagram?.activo && instagram?.url;
+
+        if (!isActive) {
+            button.style.display = 'none';
+            return;
+        }
+
+        button.href = instagram.url;
+        button.style.display = 'flex';
+    } catch (error) {
+        console.error('Error inicializando Instagram flotante:', error);
     }
 }
 

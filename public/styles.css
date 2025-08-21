@@ -657,6 +657,35 @@ html {
     line-height: 1;
 }
 
+/* Instagram flotante */
+.instagram-float {
+    position: fixed;
+    bottom: 86px;
+    right: 20px;
+    width: 56px;
+    height: 56px;
+    background: #E4405F;
+    color: #fff;
+    border-radius: 50%;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--shadow-hover);
+    z-index: 1002;
+    transition: var(--transition);
+    text-decoration: none;
+}
+
+.instagram-float:hover {
+    transform: translateY(-2px) scale(1.05);
+    background: #cc3953;
+}
+
+.instagram-float i {
+    font-size: 28px;
+    line-height: 1;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .hamburger {
@@ -795,6 +824,16 @@ html {
         height: 52px;
     }
     .whatsapp-float i {
+        font-size: 26px;
+    }
+
+    .instagram-float {
+        bottom: 78px;
+        right: 16px;
+        width: 52px;
+        height: 52px;
+    }
+    .instagram-float i {
         font-size: 26px;
     }
 } 
